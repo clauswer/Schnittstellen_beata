@@ -2,40 +2,58 @@ import requests
 import xml.etree.ElementTree as ET
 
 
-# Ausgabe der gefundenen Treffer
+# Ausgabe der Ergebnisse (Lesbare Darstellung im Terminal)
 def output_xml(xml_found):
+
+    # jedes gefundene Exemplar einzeln ausgeben
     for i, item in enumerate(xml_found, start=1):
+
         print(f"\n{i}. Exemplar")
+
+        # Signatur / Bibliothekssignatur
         print("Signatur:", item["label"])
+
+        # interne ID (EPN = Exemplar-Nummer)
         print("EPN:", item["epn"])
+
+        # Verfügbarkeit als Liste ausgeben
         print("Verfügbarkeit:", ", ".join(item["availability"]))
+
     return
 
 
-# XML analysieren und Daten extrahieren
+# XML analysieren und relevante Daten herausziehen
 def find_variables_xml(xml_dataset):
 
+    # XML-String in Baumstruktur umwandeln
     root = ET.fromstring(xml_dataset)
 
+    # Ergebnisliste für alle Exemplare
     items = []
 
+    # alle item-Knoten im XML durchgehen (Wildcard wegen Namespace)
     for item in root.findall(".//{*}item"):
 
+        # Signatur (z.B. Standort / Signatur im Regal)
         label = item.findtext(".//{*}label")
+
+        # eindeutige ID des Exemplars (EPN)
         epn = item.get("id")
 
+        # Liste für Verfügbarkeitsinfos
         availability = []
 
-        # AVAILABLE
+        # available
         for av in item.findall(".//{*}available"):
-            service = av.get("service")
+            service = av.get("service")  # loan, presentation, interloan
             availability.append(f"{service}: available")
 
-        # UNAVAILABLE
+        # unavailable
         for uv in item.findall(".//{*}unavailable"):
             service = uv.get("service")
             availability.append(f"{service}: unavailable")
 
+        # alles pro Exemplar speichern
         items.append({
             "label": label,
             "epn": epn,
@@ -45,29 +63,31 @@ def find_variables_xml(xml_dataset):
     return items
 
 
-# XML Daten von der SRU Schnittstelle laden
+# API Anfrage durchführen und XML holen
 def load_xml(base_url, params):
 
-    # HTTP Anfrage senden
+    # Request an DAIA-Server
     response_xml = requests.get(base_url, params=params)
 
-    # Verbindungsfehler abfangen
+    # Problem mit Server abfangen
     if response_xml.status_code != 200:
         print("Fehler: Anfrage fehlgeschlagen (Status:", response_xml.status_code, ")")
         return None
 
-    # UTF-8 Zeichensatz setzen
+    # Encoding setzen z.B. wegen Umlauten
     response_xml.encoding = "utf-8"
 
     # XML als Text zurückgeben
     return response_xml.text
 
 
-# SRU Anfrageparameter erstellen
+# URL und Parameter für DAIA Anfrage bauen
 def build_sru_url(ppn, isil):
 
+    # Basis-URL der DAIA Schnittstelle
     base_url = f"http://daia.gbv.de/isil/{isil}"
 
+    # Parameter für die Anfrage
     params = {
         "id": f"ppn:{ppn}",
         "format": "xml"
@@ -81,35 +101,43 @@ def main():
 
     print("Willkommen zur Verfügbarkeitsprüfung der SLUB Göttingen")
 
-    print("\nHinweis: ppn Ziffern dürfen nur neunstellig sein.")
+    print("\nHinweis: PPN muss 9 oder 10 Ziffern haben.")
 
-    #Sigel Göttingen
+    # ISIL
     sigel_goettingen = "DE-7"
-    # Auswahl des Suchfeldes
+
+    # Eingabe
     ppn = input("Geben sie die gesuchte PPN ein:")
+
+    # nur Zahlen und richtige Länge erlauben
     if not ppn.isdigit() or len(ppn) not in (9, 10):
         print("Fehler: PPN muss 9 oder 10 Ziffern haben.")
         return
+
+    # URL und Parameter erstellen
     base_url, params = build_sru_url(ppn, sigel_goettingen)
 
     print("\nErzeugte URL:")
     print(requests.Request("GET", base_url, params=params).prepare().url)
 
-
-    # XML laden
+    # XML von Server laden
     xml_dataset = load_xml(base_url, params)
-    # Verbindungsfehler abfangen
+
+    # wenn Anfrage fehlgeschlagen ist, abbrechen
     if xml_dataset is None:
         print("Zugriffsproblem.")
         return
+
+    # XML auswerten
     xml_found = find_variables_xml(xml_dataset)
-    # Keine Exemplare
+
+    # keine Exemplare gefunden
     if not xml_found:
         print("Keine Exemplare gefunden.")
         return
-    #print(xml_found)
-    output_xml(xml_found)
 
+    # Ergebnisse ausgeben
+    output_xml(xml_found)
 
 
 # Programmstart
