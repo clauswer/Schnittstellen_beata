@@ -2,7 +2,7 @@ import requests
 import xml.etree.ElementTree as ET
 
 
-# Ausgabe der Ergebnisse (Lesbare Darstellung im Terminal)
+# Ausgabe der Ergebnisse
 def output_xml(xml_found):
 
     # jedes gefundene Exemplar einzeln ausgeben
@@ -10,13 +10,13 @@ def output_xml(xml_found):
 
         print(f"\n{i}. Exemplar")
 
-        # Signatur / Bibliothekssignatur
+        # Signatur
         print("Signatur:", item["label"])
 
-        # interne ID (EPN = Exemplar-Nummer)
+        # ID (epn)
         print("EPN:", item["epn"])
 
-        # Verfügbarkeit als Liste ausgeben
+        # Verfügbarkeit als Liste
         print("Verfügbarkeit:", ", ".join(item["availability"]))
 
     return
