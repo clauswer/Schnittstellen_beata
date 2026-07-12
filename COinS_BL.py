@@ -24,10 +24,14 @@ DEBUG=True
 
 # Liest COinS-Metadaten von einer KOBV-Titelseite aus. Der Link zur Titelseite wird von nutzer angegeben
 def kobv_abfrage (kataloglink):
+    #User-Agent Header. Damit schickt der Brawser die Erkennung, dass es kein Bot ist
+    headers={
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0"
+    }
 
 #Prüfen, ob die Verbindung funktioniert:
     try:
-        response = requests.get(url=kataloglink)
+        response = requests.get(url=kataloglink, headers=headers)
     except Exception as e:
          print(f"\nFehler in der Verbindung:\n{e}")
          sys.exit(1)
@@ -45,25 +49,47 @@ def kobv_abfrage (kataloglink):
     # Sicherstellen, dass die Antwort als UTF-8 dekodiert wird
     response.encoding = response.apparent_encoding
 
+    #Rückgabe einen HTML-Inhalt
+    return response.content
+
 def parse_results (html_inhalt):
     #liest COinS-Metadaten aus der HTML aus.
     soup = BeautifulSoup(html_inhalt, "html.parser") #BeautifulSoup macht HTML durchsuchbar
-    print(html_inhalt[:2000])  #Prüft ob KOBV überhaupt sinnvolle HTML-Daten zurückschickt. Nur zum Testen
+
+    if DEBUG:
+        print(html_inhalt[:2000])  #Prüft ob KOBV überhaupt sinnvolle HTML-Daten zurückschickt.
 
     alle_coins = soup.find_all("span", class_="Z3988") #Findet alle Elemente, die Name "span" und Klasse "Z3988" haben
-    print(len(alle_coins)) #Gibt alle gefundene COinS aus
+    print("Gefundene COinS: ", len(alle_coins)) #Gibt alle gefundene COinS aus
 
-    #for coins in alle_coins:
+    for coins in alle_coins:
+        daten = parse_qs(coins["title"]) #nacht aus einen URL-String ein Dictionary
+        #für Autorangaben überprufen mehrere Keys
+        autor=daten.get("rft.au", ["None"])[0]
+        if not autor:
+            nachname=daten.get("rft.aulast,", ["-"])[0]
+            vorname = daten.get("rft.aufirst,", ["-"])[0]
+            autor=nachname+" "+vorname
 
-    """print("Autor:     ", autor.text if autor is not None else "-")
-    print("Titel:     ", titel.text if titel is not None else "nicht vorhanden")
-    print("ISSN:      ", isbn.text if isbn is not None else "nicht vorhanden")
-    print("Seiten:", herausgeber.text if herausgeber is not None else "-") """
+        #Seitenangaben bei Zeitschriftenartikel müssen getrennt ausgelesen werden
+        spage=daten.get("rft.spages", ["-"])[0]
+        epage=daten.get("rft.epages", ["-"])[0]
+        seitenangaben=spage+" - "+epage
 
+        #Ausgabe
+        print("Autor:", autor)
+        print("Artikeltitel:", daten.get("rft.atitle", ["-"])[0])
+        print("Zeitschrifttitel:", daten.get("rft.title", ["-"])[0])
+        print("Seitenangaben:", seitenangaben)
+        print("Monographietitel:", daten.get("rft.btitle", ["-"])[0])
+        print("ISBN: ", daten.get("rft.isbn", ["-"])[0])
+        print("ISSN: ", daten.get("rft.issn", ["-"])[0])
+        print("Seitenzahl:", daten.get("rft.pages", ["-"])[0])
+        print("---")
 
 # Menü
 if __name__ == "__main__":
-    kataloglink = input("Bitte geben Sie ein Link zum Exemplar an: ")
-    kobv_abfrage(kataloglink)
-
+    kataloglink = input("Bitte geben Sie einen Link zum Exemplar an: ")
+    html_inhalt=kobv_abfrage(kataloglink)
+    parse_results(html_inhalt)
 
