@@ -64,7 +64,7 @@ def parse_results (html_inhalt):
 
     for coins in alle_coins:
         daten = parse_qs(coins["title"]) #nacht aus einen URL-String ein Dictionary
-        #für Autorangaben überprufen mehrere Keys
+        #für Autorangaben werden mehrere Keys überpruft
         autor=daten.get("rft.au", ["None"])[0]
         if not autor:
             nachname=daten.get("rft.aulast,", ["-"])[0]
@@ -77,11 +77,13 @@ def parse_results (html_inhalt):
         seitenangaben=spage+" - "+epage
 
         #Ausgabe
-        print("Autor:", autor)
+        print("Autor:in:", autor)
+        print("Herausgeber:in", daten.get("rft.aucorp",["-"])[0])
         print("Artikeltitel:", daten.get("rft.atitle", ["-"])[0])
-        print("Zeitschrifttitel:", daten.get("rft.title", ["-"])[0])
+        print("Titel:", daten.get("rft.title", ["-"])[0])
+        #print("Zeitschrifttitel:", daten.get("rft.title", ["-"])[0])
         print("Seitenangaben:", seitenangaben)
-        print("Monographietitel:", daten.get("rft.btitle", ["-"])[0])
+        #print("Monographietitel:", daten.get("rft.btitle", ["-"])[0])
         print("ISBN: ", daten.get("rft.isbn", ["-"])[0])
         print("ISSN: ", daten.get("rft.issn", ["-"])[0])
         print("Seitenzahl:", daten.get("rft.pages", ["-"])[0])
