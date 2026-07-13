@@ -38,26 +38,26 @@ def kobv_abfrage (suchbegriff):
     print(response.url)
 
     """Prüfen, ob die Verbindung funktioniert"""
-try:
-    response = requests.get(url)
+    try:
+        response = requests.get(url)
     #print(response.status_code) #muss nicht sein, beim Test gut zu sehen
-except Exception as e:
-    print(f"\nFehler in der Verbindung:\n{e}")
-    sys.exit(1)
+    except Exception as e:
+        print(f"\nFehler in der Verbindung:\n{e}")
+        sys.exit(1)
 
-if DEBUG:
-    print(response.url)  # Debug-Ausgabe der tatsächlichen URL
+    if DEBUG:
+        print(response.url)  # Debug-Ausgabe der tatsächlichen URL
 
     # Sicherstellen, dass die Antwort als UTF-8 dekodiert wird
-response.encoding = response.apparent_encoding
+    response.encoding = response.apparent_encoding
+
+    soup = BeautifulSoup(response.content, "html.parser")
+    print(response.text[:2000])  #Prüft ob KOBV überhaupt sinnvolle HTML-Daten zurückschickt.
+    alle_coins = soup.find_all("span", class_="Z3988")
+    print(len(alle_coins))
+
 # Menü
 if __name__ == "__main__":
     suchbegriff = input("Bitte geben Sie ein Suchbegriff an: ")
     kobv_abfrage(suchbegriff)
-soup = BeautifulSoup(response.content, "html.parser")
-print(response.text[:2000])  #Prüft ob KOBV überhaupt sinnvolle HTML-Daten zurückschickt.
-alle_coins = soup.find_all("span", class_="Z3988")
-print(len(alle_coins))
-
-
 #print(alle_coins[0]["title"])

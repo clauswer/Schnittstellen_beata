@@ -7,7 +7,7 @@ Programm, das Metadaten via COinS aus dem KOBV Portal liest und die bibliographi
 authors: Beata Lakenberg, Sebastian Scherübl, Claus Werner
 license: MIT License
 version: 1.0
-date: 2026-07-06
+date: 2026-07-12
 """
 
 
@@ -22,14 +22,18 @@ from urllib.parse import parse_qs
 DEBUG=True
 
 
-# Liest COinS-Metadaten von einer KOBV-Titelseite aus. Der Link zur Titelseite wird von nutzer angegeben
+"""Liest COinS-Metadaten von einer KOBV-Titelseite aus. Der Link zur Titelseite wird von Nutzer angegeben. 
+Zwar wird hier, wie gewünscht, die KOBV.Abfrage gemacht, der Programm funktioniert aber auch mit Links zu anderen Katalogen, 
+die COinS haben (z.B. BVB)."""
+
 def kobv_abfrage (kataloglink):
+
     #User-Agent Header. Damit schickt der Brawser die Erkennung, dass es kein Bot ist
     headers={
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0"
     }
 
-#Prüfen, ob die Verbindung funktioniert:
+    #Prüfen, ob die Verbindung funktioniert:
     try:
         response = requests.get(url=kataloglink, headers=headers)
     except Exception as e:
